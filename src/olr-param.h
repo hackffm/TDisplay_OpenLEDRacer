@@ -14,8 +14,11 @@ extern "C"{
 
 // Default values loaded on "D" command received (Serial Protocol) 
 //////////////////////////////////////////////////////////////////
-#define MAXLED          600 
-#define BOXLEN          60 
+#define MAXLED          648 
+#define BOXLEN          132 
+//#define BOXLEN          10
+#define AUXLEN          8
+//#define AUXLEN          50
 #define NUMLAP          5 
 #define BATTERY_MODE    false
 #define AUTOSTART_MODE  false

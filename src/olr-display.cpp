@@ -15,11 +15,18 @@
  * B) Ambi-Light for Track
  * 
  */
+#define DMX_RGB_OFFSET 40
 
 extern FastLED_NeoPixel<MAXLED, PIN_LED, NEO_GRB + NEO_KHZ800> track; 
 
-uint8_t carColors[][4] = {
-  {255,0,0,0}, {0,255,0,0}, {0,0,255,0}, {0,0,0,255}
+int lampPos[8] = {20,79,115,135, 430,457,493,508};
+
+uint8_t carColorsRGBW[][4] = {  //rgbw
+  {25,0,0,0}, {0,25,0,0}, {0,0,25,0}, {0,0,0,25}
+};
+
+uint8_t carColorsRGB[][4] = {  //rgb
+  {255,0,0}, {0,255,0}, {0,0,255}, {255,255,255}
 };
 
 #ifdef ENABLE_TDISPLAY
@@ -64,6 +71,12 @@ static const uint8_t InversGammaTable[256] = {
 248,249,249,249,250,250,251,251,252,252,253,253,254,254,255,255,
 };
 
+void OlrDisp::showLampPos() {
+  for(int i=0; i<8; i++) {
+    track.setPixelColor( lampPos[i], COLOR_LIGHTPOS ); 
+  }
+}
+
 // Renders into DMX, phase 1-4 
 void OlrDisp::renderCountdown(int countdown_phase) {
   if(countdown_phase == 5) countdown_phase = 4;
@@ -85,12 +98,15 @@ void OlrDisp::renderCountdown(int countdown_phase) {
      0x00,0xff,0x00,0x00,0x00,0x00, 0x00,0xff,0x00,0x00,0x00,0x00,
      0x00,0xff,0x00,0x00,0x00,0x00, 0x00,0xff,0x00,0x00,0x00,0x00 }, // green
   };
-  memcpy(&this->dmxBuf[1], dmxOut[countdown_phase], 36);
+  // memcpy(&this->dmxBuf[1], dmxOut[countdown_phase], 36);
+  for(int i=0; i<36; i++) this->dmxBuf[i+1] = dmxOut[countdown_phase][i] >> 5;
   updateDMX(1,36);
   racingTime = 0;
 }  
 
+// DMX renderings
 void OlrDisp::renderRacing() {
+  // Renders 6 Light Traffic Light
   if(racingTime < 2500) {
     // Fade down green light
     uint8_t ch6[6] = {0,0,0,0,0,0};
@@ -127,25 +143,56 @@ void OlrDisp::renderRacing() {
     for(int i=1; i<=36; i++) this->dmxBuf[i] = 0;
     switch(maxplace) {
       case 1:
-        for(int i=0; i<6; i++) memcpy(&this->dmxBuf[i*6+1],carColors[place[0]],4);
+        for(int i=0; i<6; i++) memcpy(&this->dmxBuf[i*6+1],carColorsRGBW[place[0]],4);
         break;
       case 2:
-        for(int i=3; i<6; i++) memcpy(&this->dmxBuf[i*6+1],carColors[place[0]],4);
-        for(int i=0; i<3; i++) memcpy(&this->dmxBuf[i*6+1],carColors[place[1]],4);
+        for(int i=3; i<6; i++) memcpy(&this->dmxBuf[i*6+1],carColorsRGBW[place[0]],4);
+        for(int i=0; i<3; i++) memcpy(&this->dmxBuf[i*6+1],carColorsRGBW[place[1]],4);
         break;
       case 3:
-        for(int i=4; i<6; i++) memcpy(&this->dmxBuf[i*6+1],carColors[place[0]],4);
-        for(int i=2; i<4; i++) memcpy(&this->dmxBuf[i*6+1],carColors[place[1]],4);
-        for(int i=0; i<2; i++) memcpy(&this->dmxBuf[i*6+1],carColors[place[2]],4);
+        for(int i=4; i<6; i++) memcpy(&this->dmxBuf[i*6+1],carColorsRGBW[place[0]],4);
+        for(int i=2; i<4; i++) memcpy(&this->dmxBuf[i*6+1],carColorsRGBW[place[1]],4);
+        for(int i=0; i<2; i++) memcpy(&this->dmxBuf[i*6+1],carColorsRGBW[place[2]],4);
         break;
       case 4:
-        for(int i=4; i<6; i++) memcpy(&this->dmxBuf[i*6+1],carColors[place[0]],4);
-        for(int i=2; i<4; i++) memcpy(&this->dmxBuf[i*6+1],carColors[place[1]],4);
-        for(int i=1; i<2; i++) memcpy(&this->dmxBuf[i*6+1],carColors[place[2]],4);
-        memcpy(&this->dmxBuf[0*6+1],carColors[place[3]],4);
+        for(int i=4; i<6; i++) memcpy(&this->dmxBuf[i*6+1],carColorsRGBW[place[0]],4);
+        for(int i=2; i<4; i++) memcpy(&this->dmxBuf[i*6+1],carColorsRGBW[place[1]],4);
+        for(int i=1; i<2; i++) memcpy(&this->dmxBuf[i*6+1],carColorsRGBW[place[2]],4);
+        memcpy(&this->dmxBuf[0*6+1],carColorsRGBW[place[3]],4);
         break;        
     }  
   }   
+  
+  // Render position lamps
+  memset(&this->dmxBuf[DMX_RGB_OFFSET],0,8*3);
+  for(int caridx=0; caridx<4; caridx++) {
+    int posi = (int)cars[caridx].dist % tck.cfg.track.nled_main; 
+    if(cars[caridx].trackID != 1) posi = 0;
+    for(int i = 0; i<8; i++) {
+      int dpos = abs(lampPos[i] - posi);
+
+      if(dpos < 16) {
+        this->dmxBuf[DMX_RGB_OFFSET+i*3+0] |= (carColorsRGB[caridx][0] >> (dpos/2));
+        this->dmxBuf[DMX_RGB_OFFSET+i*3+1] |= (carColorsRGB[caridx][1] >> (dpos/2));
+        this->dmxBuf[DMX_RGB_OFFSET+i*3+2] |= (carColorsRGB[caridx][2] >> (dpos/2));
+      }
+ 
+    }
+  }
+
+}
+
+void OlrDisp::dmxDimDown() {
+  static elapsedMillis dly = 0;
+  if(dly > 100) {
+    dly = 0;
+    for(int i=0; i<65; i++) if(this->dmxBuf[i]>0) (this->dmxBuf[i])--;
+  }
+}  
+
+void OlrDisp::renderWinner(int widx) {
+  for(int i=0; i<6; i++) memcpy(&this->dmxBuf[i*6+1],carColorsRGBW[widx],4);
+  for(int i=0; i<8; i++) memcpy(&this->dmxBuf[i*3+DMX_RGB_OFFSET],carColorsRGB[widx],3);
 }
 
 void OlrDisp::renderTrack() {

@@ -114,11 +114,13 @@ static uint32_t car_color[]={
 };
 
 void espnowDataReceived (uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast) {
+  #ifdef ESPNOWRXPRINT
     Serial.print ("Received: ");
     Serial.printf ("%.*s\n", len, data);
     Serial.printf ("RSSI: %d dBm\n", rssi);
     Serial.printf ("From: " MACSTR "\n", MAC2STR (address));
     Serial.printf ("%s\n", broadcast ? "Broadcast" : "Unicast");
+  #endif
 }
 
 void espnowSendString(const char* text) {
@@ -170,7 +172,8 @@ void setup() {
   // Check Box before Physic/Sound to allow user to have Box and Physics with no sound
   if(controller_isActive( DIGITAL_CTRL[CTRL_2]) || param_option_is_active(&tck.cfg, BOX_MODE_OPTION) ) { //push switch 2 on reset for activate boxes (pit lane)
     box_init( &tck );
-    track_configure( &tck, tck.cfg.track.nled_total - tck.cfg.track.box_len );
+    track_configure( &tck, tck.cfg.track.nled_total - tck.cfg.track.box_len /*  tck.cfg.track.nled_total - tck.cfg.track.box_len + AUXLEN */ );
+    Serial.printf("CFG %d %d %d %d\r\n", (int)tck.cfg.track.box_len, (int)tck.cfg.track.nled_aux, (int)tck.cfg.track.nled_main, (int)tck.cfg.track.nled_total);
     draw_box_entrypoint( &tck );
   } else{
     track_configure( &tck, 0 );
@@ -289,11 +292,12 @@ void loop() {
               if (controller_getStatus(cars[i].ct)==false) {
                     track.setPixelColor(i,cars[i].color); 
                     pstart++;
-
               }
             }      
             track.setPixelColor(LED_SEMAPHORE , ((millis()/5)%128)*0x010100 );   
             pling.draw();
+            Disp.showLampPos();
+            Disp.dmxDimDown();
             track.show();
             // if every controller activated -> Ready for Countdown 
             if (pstart==race.numcars) goOn=true;
@@ -396,7 +400,11 @@ void loop() {
       {
         strip_clear( &tck, false );
         track.show();
+        sprintf(espnowmsg, "DingDing:.w%d", (int)race.winner);
+        espnowSendString(espnowmsg); 
         draw_winner( &tck, cars[race.winner].color );
+        Disp.renderWinner(race.winner);
+        Disp.updateDMX(1,64);
         sound_winner( &tck, race.winner );
         strip_clear( &tck, false );
         track.show();
@@ -431,13 +439,14 @@ void loop() {
     case 0:
       Disp.renderTrack();
       Disp.updateDisplay(1);
+      Disp.updateDMX(40,40+8*3);
       break;
 
     case 1:
       {
         int pos = (int)cars[0].dist % tck.cfg.track.nled_main; 
         if(cars[0].trackID != 1) pos = 0;
-        Disp.renderMeters(pos/*cars[0].speed*/,cars[0].dist,cars[0].dist_aux,(float)myEnc->read());
+        Disp.renderMeters(pos/*cars[0].speed*/,cars[0].dist,cars[0].speed,(float)myEnc->read());
       }
       Disp.updateDisplay(2);
       if(digitalRead(17) == 0) myEnc->write(0);
@@ -450,7 +459,7 @@ void loop() {
     //  Disp.dmxBuf[4] = 0;
     //  Disp.dmxBuf[5+6] = ((track.getPixelColor(12) >> 16) & 0xff);;
     //  Disp.dmxBuf[6] = 0;
-      Disp.updateDMX(1,36);
+      Disp.updateDMX(1,64);
       Disp.updateDisplay(3);
       break;
 
@@ -834,7 +843,12 @@ void draw_box_entrypoint( track_t* _tck ) {
     int out = cfg->nled_total - cfg->box_len; // Pit lane exit (race start)
     int in = out - cfg->box_len;              // Pit lane Entrance
     track.setPixelColor(in ,COLOR_BOXMARKS ); 
-    track.setPixelColor(out  ,COLOR_BOXMARKS ); 
+    for( int i = 0; i < race.numcars; i++) {
+      if (controller_getStatus(cars[i].ct)==false) {
+                      track.setPixelColor(cfg->nled_total-(i+3),cars[i].color); 
+      }  
+    }
+    track.setPixelColor(out ,COLOR_BOXMARKS ); 
 }
 
 

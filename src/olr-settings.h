@@ -92,11 +92,12 @@ enum hw_setup {    // If you have a custom hardware (i.e not the OLR PCB),
 #define COLOR3         track.Color(0,0,255)     // Light controlled by DIG_CTRL_3_PIN
 #define COLOR4         track.Color(255,255,255) // Light controlled by DIG_CTRL_4_PIN
 
-#define COLOR_RAMP     track.Color(64,0,64)
-#define COLOR_COIN     track.Color(40,34,0)
+#define COLOR_RAMP     track.Color(16,0,16)
+#define COLOR_COIN     track.Color(255,34,0)
 #define COLOR_BOXMARKS track.Color(64,64,0)
 #define WARNING_BLINK_COLOR  track.Color(32,20,0)
 #define COLOR_PLINGS   track.Color(0,34,40)
+#define COLOR_LIGHTPOS track.Color(0,00,40)
 
 #define LED_SEMAPHORE  12 // LED in the Stip used as a Semaphore (Countdown phase)
 
@@ -109,7 +110,7 @@ enum hw_setup {    // If you have a custom hardware (i.e not the OLR PCB),
 enum delays_setup {    // If you have a custom hardware (i.e not the OLR PCB), 
   CONTDOWN_PHASE_DURATION      = 2000, // (mSec) 
   CONTDOWN_STARTSOUND_DURATION = 40,   // (mSec)
-  NEWRACE_DELAY                = 5000, // (mSec)
+  NEWRACE_DELAY                = 15000, // (mSec)
   INACTIVITY_TIMEOUT_DELAY     = 300,  // (Sec)  When demo_mode is active, board goes into demo mode after this inactivity time 
   TELEMETRY_DELAY              = 250,  // (mSec) Telemetry data sent every TELEMETRY_DELAY mSec
 };

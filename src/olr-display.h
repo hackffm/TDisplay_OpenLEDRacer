@@ -9,10 +9,18 @@ class OlrDisp {
   public:
     OlrDisp();
     void begin();
+
+    // Stuff for display
     void renderTrack();
     void renderMeters(float a, float b, float c, float d);
     void updateDisplay(int part=0);
 
+    // Stuff for Track
+    void showLampPos();
+
+    // Stuff for DMX
+    void dmxDimDown();
+    void renderWinner(int widx);
     void renderCountdown(int countdown_phase);
     void renderRacing();
     void updateDMX(uint16_t startChannel=1, uint16_t endChannel=0);

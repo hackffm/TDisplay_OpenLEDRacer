@@ -51,9 +51,9 @@ void process_aux_track( track_t* tck, car_t* car ){
     struct cfgbattery const* battery = &tck->cfg.battery;
 
     if (  (int)car->dist_aux == tck->ledcoin 
-          && car->speed <= controller_getAccel() ) {                      
-        car->speed = controller_getAccel() * (1.0 * battery->speed_boost_scaler);
-
+        /*  && car->speed <= controller_getAccel() */ ) {                      
+        //car->speed = controller_getAccel() * (1.0 * battery->speed_boost_scaler);
+        car->speed = 6.0;
         tck->ledcoin = COIN_RESET;
         car->battery=100;
     };
