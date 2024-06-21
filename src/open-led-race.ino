@@ -63,6 +63,8 @@ char espnowmsg[255];
 #include <Encoder.h>
 Encoder *myEnc;
 
+#include "olr-extras.h"
+
 /*------------------------------------------------------*/
 int win_music[] = {
   2637, 2637, 0, 2637,
@@ -70,6 +72,7 @@ int win_music[] = {
   3136
 };
 /*------------------------------------------------------*/
+
 
 
 race_t       race;
@@ -205,8 +208,8 @@ void setup() {
   quickEspNow.setWiFiBandwidth(WIFI_IF_STA, WIFI_BW_HT20); // Only needed for ESP32 in case you need coexistence with ESP8266 in the same network
   quickEspNow.begin(13); // If you use no connected WiFi channel needs to be specified
 
-  myEnc = new Encoder(21,22);
-
+  myEnc = new Encoder(22,21);
+  pinMode(21, INPUT); pinMode(22, INPUT); pinMode(17, INPUT);
 }
 
 /*
@@ -290,6 +293,7 @@ void loop() {
               }
             }      
             track.setPixelColor(LED_SEMAPHORE , ((millis()/5)%128)*0x010100 );   
+            pling.draw();
             track.show();
             // if every controller activated -> Ready for Countdown 
             if (pstart==race.numcars) goOn=true;
@@ -370,6 +374,9 @@ void loop() {
           }
         }
   
+        pling.draw();
+        pling.doPlings();
+
         track.show();
   //      if (s_motor==1) tone(PIN_AUDIO,f_beep+int(cars[0].speed*440*1)+int(cars[1].speed*440*2)+int(cars[2].speed*440*3)+int(cars[3].speed*440*4));
         if (t_beep>0) {t_beep--;} else {f_beep=0;};
@@ -427,8 +434,13 @@ void loop() {
       break;
 
     case 1:
-      Disp.renderMeters(cars[0].speed,cars[0].dist,cars[0].dist_aux,(float)myEnc->read());
+      {
+        int pos = (int)cars[0].dist % tck.cfg.track.nled_main; 
+        if(cars[0].trackID != 1) pos = 0;
+        Disp.renderMeters(pos/*cars[0].speed*/,cars[0].dist,cars[0].dist_aux,(float)myEnc->read());
+      }
       Disp.updateDisplay(2);
+      if(digitalRead(17) == 0) myEnc->write(0);
       break;
 
     case 2:
@@ -609,7 +621,7 @@ int get_relative_position( car_t* car ) {
       MIN_RPOS = 0,
       MAX_RPOS = 99,
     };
-    struct cfgtrack const* cfg = &tck.cfg.track;
+    struct cfgtrack const* cfg = &tck.cfg.track; 
     int trackdist = 0;
     int pos = 0;
 

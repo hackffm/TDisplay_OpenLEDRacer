@@ -45,8 +45,10 @@ extern "C"{
 enum hw_setup {    // If you have a custom hardware (i.e not the OLR PCB), 
   PIN_LED = 27,     // set PIN_LED and PIN_AUDIO accordingly
   PIN_AUDIO =  12,   
+  PIN_LED2 = 33, 
 };
 
+// Rotary: A=21, B=22, Button=17
 
 ///////////////////////////////////////////////////////////////////////////////
 //  __________________ Digital Controllers (Buttons)_______________________  //
@@ -94,6 +96,7 @@ enum hw_setup {    // If you have a custom hardware (i.e not the OLR PCB),
 #define COLOR_COIN     track.Color(40,34,0)
 #define COLOR_BOXMARKS track.Color(64,64,0)
 #define WARNING_BLINK_COLOR  track.Color(32,20,0)
+#define COLOR_PLINGS   track.Color(0,34,40)
 
 #define LED_SEMAPHORE  12 // LED in the Stip used as a Semaphore (Countdown phase)
 
